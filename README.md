@@ -16,3 +16,5 @@ Start-Process C:\Users\$env:username\AppData\Roaming\reolink\userSettings
 #### Bypass internet connection
 Shift + F10
 OOBE\BYPASSNRO
+
+#### TreeSize Free
