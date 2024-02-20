@@ -13,12 +13,12 @@ sudo docker run --name docker-nginx -p 80:80 nginx
 
 sudo docker container start 88fcace2770f -p 80:80
 sudo docker container stop 88fcace2770f
-
+sudo docker container rm 88fcace2770f
 
 docker ps -a
+sudo docker container ls
 
 
-sudo docker container rm 88fcace2770f
 
 ###Se available images
 sudo docker image ls
@@ -30,7 +30,7 @@ sudo docker run --name docker-nginx -p 80:80 -d -v ~/docker-nginx/html:/usr/shar
 sudo docker ps
 sudo docker ps -a
 
-
+sudo docker restart docker-nginx
 
 ##https://www.digitalocean.com/community/tutorials/how-to-run-nginx-in-a-docker-container-on-ubuntu-22-04
 ##https://www.cherryservers.com/blog/docker-stop-container
