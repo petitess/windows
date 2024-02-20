@@ -24,5 +24,13 @@ sudo docker container rm 88fcace2770f
 sudo docker image ls
 ###Se containers
 sudo docker ps -l
-##Run permanenlty
-docker run --name docker-nginx -p 80:80 -d -v ~/docker-nginx/html:/usr/share/nginx/html nginx
+##Run permanenlty (create a index.html first)
+sudo docker run --name docker-nginx -p 80:80 -d -v ~/docker-nginx/html:/usr/share/nginx/html nginx
+##Check status
+sudo docker ps
+sudo docker ps -a
+
+
+
+##https://www.digitalocean.com/community/tutorials/how-to-run-nginx-in-a-docker-container-on-ubuntu-22-04
+##https://www.cherryservers.com/blog/docker-stop-container
