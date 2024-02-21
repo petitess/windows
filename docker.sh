@@ -18,10 +18,12 @@ sudo docker container rm 88fcace2770f
 
 ###Se available images
 sudo docker image ls
-##Run container 1 permanenlty (create a index.html first)
+##Run custom container 1 permanenlty (create a index.html first)
 sudo docker run --name docker-nginx -p 80:80 -d -v ~/docker-nginx/html:/usr/share/nginx/html nginx
-##Run container 2 permanenlty (create a index.html first)
+##Run custom container 2 permanenlty (create a index.html first)
 sudo docker run --name docker-nginxX -p 81:80 -d -v ~/docker-nginxX/html:/usr/share/nginx/html nginx
+##Run original container
+sudo docker run --name docker-nginx -p 80:80 -d 381d7fce094c
 ##Check status
 sudo docker ps
 sudo docker ps -a
