@@ -10,3 +10,171 @@ https://vstsagentpackage.azureedge.net/agent/3.232.3/vsts-agent-win-x64-3.232.3.
 ```
 ./config.cmd remove --auth "PAT" --token "XXXXsjqaej64k6txaskrxl37zujx75plrkvy52xq"
 ```
+# Info
+
+XXX använder sig av privata devops agenter. I och med att de behöver ha massa olika verktyg används en fullpackad image som microsoft använder. Tyvär får man inte en färdig image, den måste man bygga själv.
+
+Den finns i repot `https://github.com/actions/runner-images` och deras guide finns under `https://github.com/actions/runner-images/blob/main/docs/create-image-and-azure-resources.md`
+  
+Här nedan beskrivs alla steg för att bygga och deploya en image, så man behöver inte läsa deras guide.
+
+XXX använder linux agenter och windows agenter.
+Man vill inte göra misstag här för att det tar flera timmar att bygga en image.
+
+Det tar ~5 timmar att bygga windows image.
+Helst ska det göras tidigt på morgonen och kontrolleras under tiden.
+Det ska utföras på vmmgmtprod01. VM som ska bygga image måste ha git, packer, powershell och azure CLI.
+VS Code är hjälpsam också. Förvissa dig om att VM inte stänger av sig själv.
+
+Subscription `sub-infra-prod-01` används.
+
+WinRm och SSH används vilket innebär att port 5986 och 22 måste tillåtas.
+
+Det ska utföras med ett personligt konto. 
+Owner och Application Admin under 8 timmar krävs.
+
+Klona repot:
+`git clone https://github.com/actions/runner-images.git`
+
+Placera dig i rätt mapp:
+`Set-Location -Path 'runner-images'`
+
+Importera modulen:
+`Import-Module .\helpers\GenerateResourcesAndImage.ps1`
+
+# Windows
+Kör scriptet nedan för att skapa en image med Windows server 2022.
+Scriptet skapar en tillfällig app registration och resurser som tas bort när allt är färdigt.
+```powershell
+.\helpers\GenerateResourcesAndImage.ps1; GenerateResourcesAndImage `
+-SubscriptionId 'd7909d2e-2a55-4c2f-b005-d700d0bc3e66' `
+-ResourceGroupName 'rg-infra-image-agent-prod-01' `
+-AzureLocation 'westeurope' `
+-ImageType 'Windows2022' `
+-ManagedImageName ("image-agent-$($ImageType)-$(Get-Date -Format "yyyy-MM-dd")").ToLower()
+```
+# Linux
+Kör scriptet nedan för att skapa en image med Ubuntu 22.04.
+Scriptet skapar en tillfällig app registration och resurser som tas bort när allt är färdigt.
+```powershell
+.\helpers\GenerateResourcesAndImage.ps1; GenerateResourcesAndImage `
+-SubscriptionId 'd7909d2e-2a55-4c2f-b005-d700d0bc3e66' `
+-ResourceGroupName 'rg-infra-image-prod-01' `
+-AzureLocation 'westeurope' `
+-ImageType 'Ubuntu2204' `
+-ManagedImageName ("image-agent-linux-$(Get-Date -Format "yyyy-MM-dd")").ToLower()
+```
+Resursgruppen finns redan. `N`
+![1.png](/.attachments/1-92739e8f-b922-4f4b-bddc-edb15f048ba9.png)
+
+I ett perfekt scenario får man inga felmeddelande. Men det kan dyka upp något. Då trycker man på `r` för att fortsätta. Dyker det upp massa felmeddelanden då är det något fel. Testa en annan branch eller vänta att dem släpper en ny release.  
+![packer2.png](/.attachments/packer2-3638f6cf-658b-4034-8b1e-d5ff7488a36d.png)
+
+En av dem sista stegen är att skapa en image. Steget IMAGE_STATE_UNDEPLOYABLE, kan ta sin tid. Men det kan vara så att sysprep inte körs. Det finns resursgrupp som heter ungefär `pkr-Resource-Group-6b3w4n0di5`. Man kan skapa en ny användare och logga in genom RDP publikt. Om inget händer där starta om den virtuella maskinen, så borde den komma igång. 
+![2.png](/.attachments/2-7a41bebc-e709-403f-b265-6721da52069c.png)
+
+Här är ett windows-bygge som slutade efter 12 timmar. Det är ovanligt. Man fick ett felmeddelande att den misslyckades ta bort app registration för att mina PIM-behörighter försvann under tiden. Gå till EntraId och ta bort den manuellt. Appen heter ungefär `packer-0524A4E7-08AD-4443-A121-CA667C505506`.
+Se till också att resursgruppen som heter ungefär `pkr-Resource-Group-6b3w4n0di5` är borttagen också.
+![3.png](/.attachments/3-71048407-4e87-4c39-b2a9-7fcb4b2a69b3.png)
+
+Här är ett linux-bygge som misslyckades, pga. SSH. I det fallet inget farlig image dök upp i portalen och fungerade.
+
+![image.png](/.attachments/image-9ec3101f-02d9-4f7c-8f33-7c053b500a01.png)
+
+När images är färdiga kan man skapa virtuella maskiner av dem.
+![image.png](/.attachments/image-411a17c3-1e56-4fc0-b9bc-6f69ef7fdbe6.png)
+
+# Deploya virtuella maskiner
+
+Devops agenter finns endast i produktionsmiljön. Det finns en vm som kör windows `vmdevopswind0X` och en vm som kör ubuntu `vmdevopslinux0X`
+
+Gå till repot `xxx-infra`. I parameterfilen ligger befintliga virtuella maskiner. Dem ska tas bort när man är klar med dem nya. 
+Justera siffran i namnet till något som inte finns. Antingen 01 eller 02.
+Peka på den nya imagen i parametern `imageName`
+Ändra IP-adressen till en som inte är tagen.
+Skjut ut koden.
+
+![image.png](/.attachments/image-c4908d7b-5b10-4e75-953e-d440ef7d7c4d.png)   
+
+Även om image blev skapad utan problem så kan det uppstå problem under deployment.
+Om den nya virtuella maskinen har fastnat på `Creating` eller är i `Failed` tillstånd så kan det innebära att image blev korrupt. I så fall får man bygga en ny image.
+
+![6.png](/.attachments/6-d7d2ac7e-d487-476e-a00c-a5a4744906ff.png)
+
+![7.png](/.attachments/7-d1cac037-432b-4cc7-b1a1-ce6aea13750c.png)
+
+# Installera devops agenter 
+## Windows 
+Öppna powershell 7 som admin. Placera dig på C:/
+Hämta den senaste länken för zip filen. Klista in som $AgentUrl.
+Skapa en Personal access token (PAT). Klistar in som $PAT.
+Installationscriptet installerar 10 agenter. Man kan anpassa antalet. 
+Det finns avinstallationscript om man skulle behöva det.
+
+```powershell
+$AgentUrl = 'https://vstsagentpackage.azureedge.net/agent/3.236.1/vsts-agent-win-x64-3.236.1.zip'
+$PAT = ""
+$OrgNAme = "xxxse"
+$PoolName = "vmdevopswind01"
+$AgentName = "agent_$(Get-Date -Format "yyMMdd")"
+
+Invoke-WebRequest -URI $AgentUrl -OutFile "agent.zip"
+#Install
+1..2 | ForEach-Object {
+    New-Item -ItemType Directory -Name "agent$($_)"
+    Set-Location -Path "agent$($_)"
+    Expand-Archive -Path "..\agent.zip" -DestinationPath "..\agent$($_)"
+    ./config.cmd --unattended `
+        --url "https://dev.azure.com/$OrgNAme" `
+        --auth "PAT" --token $PAT  `
+        --pool $PoolName `
+        --agent "$($AgentName)_$($_)" `
+        --work "D:\_work_$($AgentName)_$($_)" `
+        --runAsService `
+        --runAsAutoLogon `
+        --noRestart `
+        --windowsLogonAccount "NT AUTHORITY\NETWORK SERVICE"
+    Set-Location -Path ".."
+}
+
+
+#Uninstall
+$Folders = Get-ChildItem -Directory | Where-Object { $_.Name -like "agent*" }
+$Folders | ForEach-Object {
+    Set-Location -Path $_
+    ./config.cmd remove --auth "PAT" --token $PAT
+    Set-Location -Path ".."
+}
+```
+## Linux
+Logga in med SSH. Placera dig på `/` - `cd /`
+Hämta den senaste länken för zip filen. Klista in som $AgentUrl.
+Skapa en Personal access token (PAT). Klistar in som $PAT.
+Installationscriptet installerar 10 agenter. Man kan anpassa antalet. 
+```bash
+installAgent() {
+    local PAT=""
+    local ORG="xxxse"
+    local POOL="vmdevopslinux01"
+    sudo mkdir devopsagents
+    sudo groupadd agentusers
+    sudo gpasswd -a azadmin agentusers
+    sudo gpasswd -a root agentusers
+    cd devopsagents
+    sudo curl --output agent.tar.gz "https://vstsagentpackage.azureedge.net/agent/3.236.1/vsts-agent-linux-x64-3.236.1.tar.gz"
+    for i in {1..2}
+    do
+    sudo mkdir "agent$i"
+    cd "agent$i"
+    sudo tar zxvf ../agent.tar.gz
+    sudo chown -R azadmin:agentusers /devopsagents
+    sudo chown -R azadmin:agentusers /devopsagents
+    sudo chmod -R g+w /devopsagents
+    ./config.sh --unattended --url https://dev.azure.com/$ORG --auth pat --token $PAT --pool $POOL --agent "agent_$(date '+%Y_%m_%d')_$i" --acceptTeeEula --work "../../tmp/_work_agent$i"
+    sudo ./svc.sh install
+    sudo ./svc.sh start
+    cd ..
+    done
+}
+installAgent 
+```
