@@ -1,7 +1,8 @@
 $AgentUrl = 'https://vstsagentpackage.azureedge.net/agent/3.236.1/vsts-agent-win-x64-3.236.1.zip'
-$PAT = "xxxxeks4xf5seh5vutzt27j2hsosvq"
+$PAT = "xxf5seh5vutzt27j2hsosvq"
 $OrgNAme = "xxse"
 $PoolName = "vmdevopslabb01"
+$AgentName = "agent_$(Get-Date -Format "yyMMdd")"
 
 Invoke-WebRequest -URI $AgentUrl -OutFile "agent.zip"
 #Install
@@ -13,15 +14,14 @@ Invoke-WebRequest -URI $AgentUrl -OutFile "agent.zip"
         --url "https://dev.azure.com/$OrgNAme" `
         --auth "PAT" --token $PAT  `
         --pool $PoolName `
-        --agent "agent$($_)" `
-        --work "D:\_work_agent$($_)" `
+        --agent "$($AgentName)_$($_)" `
+        --work "D:\_work_$($AgentName)_$($_)" `
         --runAsService `
         --runAsAutoLogon `
         --noRestart `
         --windowsLogonAccount "NT AUTHORITY\NETWORK SERVICE"
     Set-Location -Path ".."
 }
-
 
 #Uninstall
 $Folders = Get-ChildItem -Directory | Where-Object { $_.Name -like "agent*" }
