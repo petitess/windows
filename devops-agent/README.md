@@ -117,9 +117,13 @@ Om den nya virtuella maskinen har fastnat på `Creating` eller är i `Failed` ti
 # Installera devops agenter 
 ## Windows 
 Öppna powershell 7 som admin. Placera dig på C:/
+
 Hämta den senaste länken för zip filen. Klista in som $AgentUrl.
+
 Skapa en Personal access token (PAT). Klistar in som $PAT.
+
 Installationscriptet installerar 10 agenter. Man kan anpassa antalet. 
+
 Det finns avinstallationscript om man skulle behöva det.
 
 ```powershell
@@ -167,8 +171,11 @@ Man måste lägga till NT AUTHORITY\NETWORK SERVICE och NT AUTHORITY\NETWORK som
 
 ## Linux
 Logga in med SSH. Placera dig på `/` - `cd /`
+
 Hämta den senaste länken för zip filen. Klista in som URL.
+
 Skapa en Personal access token (PAT). Klistar in som PAT.
+
 Installationscriptet installerar 10 agenter. Man kan anpassa antalet. 
 ```bash
 installAgent() {
