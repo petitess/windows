@@ -199,4 +199,4 @@ installAgent() {
 installAgent 
 ```
 ## Rensa gamla resurser
-Det säkraste är att låta utvecklare testa nya agenter. Stäng av virtuella mskiner med gammal image och ta bort den efter några dagar.
+Det säkraste är att låta utvecklare testa nya agenter. Stäng av virtuella mskiner med gammal image och ta bort dem efter några dagar.
