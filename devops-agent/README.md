@@ -26,6 +26,15 @@ Helst ska det göras tidigt på morgonen och kontrolleras under tiden.
 Det ska utföras på vmmgmtprod01. VM som ska bygga image måste ha git, packer, powershell och azure CLI.
 VS Code är hjälpsam också. Förvissa dig om att VM inte stänger av sig själv.
 
+Man måste stänga av defender, annars får man felet IMAGE_STATE_UNDEPLOYABLE.
+![2.png](/.attachments/2-56c7d691-d6e0-4c35-accb-8656336890b8.png)
+
+Microsoft Defender for Cloud >  Environment settings > sub-infra-prod-01 > Servers > Off
+Schemalagd pipeline kommer slå på den igen under natten.
+![9.png](/.attachments/9-c1fe649f-6319-4075-8a24-2878b6b80ecd.png)
+
+Använder man SOC tjänst kommer förmodligen larm triggas, så det kan komma ärende från Orange. 
+
 Subscription `sub-infra-prod-01` används.
 
 WinRm och SSH används vilket innebär att port 5986 och 22 måste tillåtas.
@@ -70,12 +79,10 @@ Resursgruppen finns redan. `N`
 I ett perfekt scenario får man inga felmeddelande. Men det kan dyka upp något. Då trycker man på `r` för att fortsätta. Dyker det upp massa felmeddelanden då är det något fel. Testa en annan branch eller vänta att dem släpper en ny release.  
 ![packer2.png](/.attachments/packer2-3638f6cf-658b-4034-8b1e-d5ff7488a36d.png)
 
-En av dem sista stegen är att skapa en image. Steget IMAGE_STATE_UNDEPLOYABLE, kan ta sin tid. Men det kan vara så att sysprep inte körs. Det finns resursgrupp som heter ungefär `pkr-Resource-Group-6b3w4n0di5`. Man kan skapa en ny användare och logga in genom RDP publikt. Om inget händer där starta om den virtuella maskinen, så borde den komma igång. 
-![2.png](/.attachments/2-7a41bebc-e709-403f-b265-6721da52069c.png)
+Här är ett windows-bygge som slutade efter 4.5 timmar. 
 
-Här är ett windows-bygge som slutade efter 12 timmar. Det är ovanligt. Man fick ett felmeddelande att den misslyckades ta bort app registration för att mina PIM-behörighter försvann under tiden. Gå till EntraId och ta bort den manuellt. Appen heter ungefär `packer-0524A4E7-08AD-4443-A121-CA667C505506`.
-Se till också att resursgruppen som heter ungefär `pkr-Resource-Group-6b3w4n0di5` är borttagen också.
-![3.png](/.attachments/3-71048407-4e87-4c39-b2a9-7fcb4b2a69b3.png)
+När bygget är klart, borde resurser rensas. Se till att det blev gjort. App registration heter ungefär `packer-0524A4E7-08AD-4443-A121-CA667C505506`. Resursgruppen heter ungefär `pkr-Resource-Group-6b3w4n0di5`.
+![11.png](/.attachments/11-1c156ede-3b73-4b3b-9f3d-c1b738d32815.png)
 
 Här är ett linux-bygge som misslyckades, pga. SSH. I det fallet inget farlig image dök upp i portalen och fungerade.
 
@@ -113,14 +120,14 @@ Det finns avinstallationscript om man skulle behöva det.
 
 ```powershell
 $AgentUrl = 'https://vstsagentpackage.azureedge.net/agent/3.236.1/vsts-agent-win-x64-3.236.1.zip'
-$PAT = ""
+$PAT = "x"
 $OrgNAme = "xxxse"
-$PoolName = "vmdevopswind01"
-$AgentName = "agent_$(Get-Date -Format "yyMMdd")"
+$PoolName = "vmdevopswin01"
+$AgentName = "agent_win_$(Get-Date -Format "yyMMdd")"
 
 Invoke-WebRequest -URI $AgentUrl -OutFile "agent.zip"
 #Install
-1..2 | ForEach-Object {
+1..10 | ForEach-Object {
     New-Item -ItemType Directory -Name "agent$($_)"
     Set-Location -Path "agent$($_)"
     Expand-Archive -Path "..\agent.zip" -DestinationPath "..\agent$($_)"
@@ -137,32 +144,36 @@ Invoke-WebRequest -URI $AgentUrl -OutFile "agent.zip"
     Set-Location -Path ".."
 }
 
-
 #Uninstall
 $Folders = Get-ChildItem -Directory | Where-Object { $_.Name -like "agent*" }
+$PAT = "x"
 $Folders | ForEach-Object {
     Set-Location -Path $_
     ./config.cmd remove --auth "PAT" --token $PAT
     Set-Location -Path ".."
 }
 ```
+Se till att det ligger 10 nya agenter i poolen `vmdevopswin01`. Dem är märkta med datum. De gamla kan disablas.
+![image.png](/.attachments/image-6d1a1a20-5778-4aa1-82f1-8ddf8888a8d9.png)
+
 ## Linux
 Logga in med SSH. Placera dig på `/` - `cd /`
-Hämta den senaste länken för zip filen. Klista in som $AgentUrl.
-Skapa en Personal access token (PAT). Klistar in som $PAT.
+Hämta den senaste länken för zip filen. Klista in som URL.
+Skapa en Personal access token (PAT). Klistar in som PAT.
 Installationscriptet installerar 10 agenter. Man kan anpassa antalet. 
 ```bash
 installAgent() {
-    local PAT=""
+    local PAT="x"
     local ORG="xxxse"
     local POOL="vmdevopslinux01"
+    local URL="https://vstsagentpackage.azureedge.net/agent/3.236.1/vsts-agent-linux-x64-3.236.1.tar.gz"
     sudo mkdir devopsagents
     sudo groupadd agentusers
     sudo gpasswd -a azadmin agentusers
     sudo gpasswd -a root agentusers
     cd devopsagents
-    sudo curl --output agent.tar.gz "https://vstsagentpackage.azureedge.net/agent/3.236.1/vsts-agent-linux-x64-3.236.1.tar.gz"
-    for i in {1..2}
+    sudo curl --output agent.tar.gz $URL
+    for i in {1..10}
     do
     sudo mkdir "agent$i"
     cd "agent$i"
@@ -170,7 +181,7 @@ installAgent() {
     sudo chown -R azadmin:agentusers /devopsagents
     sudo chown -R azadmin:agentusers /devopsagents
     sudo chmod -R g+w /devopsagents
-    ./config.sh --unattended --url https://dev.azure.com/$ORG --auth pat --token $PAT --pool $POOL --agent "agent_$(date '+%Y_%m_%d')_$i" --acceptTeeEula --work "../../tmp/_work_agent$i"
+    ./config.sh --unattended --url https://dev.azure.com/$ORG --auth pat --token $PAT --pool $POOL --agent "agent_linux_$(date '+%Y_%m_%d')_$i" --acceptTeeEula --work "../../tmp/_work_agent$i"
     sudo ./svc.sh install
     sudo ./svc.sh start
     cd ..
@@ -178,3 +189,5 @@ installAgent() {
 }
 installAgent 
 ```
+## Rensa gamla resurser
+Det säkraste är att låta utvecklare testa nya agenter. Stäng av virtuella mskiner med gammal image och ta bort den efter några dagar.
