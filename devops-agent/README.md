@@ -27,11 +27,12 @@ Det ska utföras på vmmgmtprod01. VM som ska bygga image måste ha git, packer,
 VS Code är hjälpsam också. Förvissa dig om att VM inte stänger av sig själv.
 
 Man måste stänga av defender, annars får man felet IMAGE_STATE_UNDEPLOYABLE.
-![2.png](/.attachments/2-56c7d691-d6e0-4c35-accb-8656336890b8.png)
+<img src="./img/1.png"/>
 
 Microsoft Defender for Cloud >  Environment settings > sub-infra-prod-01 > Servers > Off
+
 Schemalagd pipeline kommer slå på den igen under natten.
-![9.png](/.attachments/9-c1fe649f-6319-4075-8a24-2878b6b80ecd.png)
+<img src="./img/2.png"/>
 
 Använder man SOC tjänst kommer förmodligen larm triggas, så det kan komma ärende från Orange. 
 
@@ -74,22 +75,26 @@ Scriptet skapar en tillfällig app registration och resurser som tas bort när a
 -ManagedImageName ("image-agent-linux-$(Get-Date -Format "yyyy-MM-dd")").ToLower()
 ```
 Resursgruppen finns redan. `N`
-![1.png](/.attachments/1-92739e8f-b922-4f4b-bddc-edb15f048ba9.png)
+
+<img src="./img/3.png"/>
 
 I ett perfekt scenario får man inga felmeddelande. Men det kan dyka upp något. Då trycker man på `r` för att fortsätta. Dyker det upp massa felmeddelanden då är det något fel. Testa en annan branch eller vänta att dem släpper en ny release.  
-![packer2.png](/.attachments/packer2-3638f6cf-658b-4034-8b1e-d5ff7488a36d.png)
+
+<img src="./img/4.png"/>
 
 Här är ett windows-bygge som slutade efter 4.5 timmar. 
 
 När bygget är klart, borde resurser rensas. Se till att det blev gjort. App registration heter ungefär `packer-0524A4E7-08AD-4443-A121-CA667C505506`. Resursgruppen heter ungefär `pkr-Resource-Group-6b3w4n0di5`.
-![11.png](/.attachments/11-1c156ede-3b73-4b3b-9f3d-c1b738d32815.png)
+
+<img src="./img/5.png"/>
 
 Här är ett linux-bygge som misslyckades, pga. SSH. I det fallet inget farlig image dök upp i portalen och fungerade.
 
-![image.png](/.attachments/image-9ec3101f-02d9-4f7c-8f33-7c053b500a01.png)
+<img src="./img/6.png"/>
 
 När images är färdiga kan man skapa virtuella maskiner av dem.
-![image.png](/.attachments/image-411a17c3-1e56-4fc0-b9bc-6f69ef7fdbe6.png)
+
+<img src="./img/7.png"/>
 
 # Deploya virtuella maskiner
 
@@ -101,14 +106,13 @@ Peka på den nya imagen i parametern `imageName`
 Ändra IP-adressen till en som inte är tagen.
 Skjut ut koden.
 
-![image.png](/.attachments/image-c4908d7b-5b10-4e75-953e-d440ef7d7c4d.png)   
+<img src="./img/8.png"/>  
 
 Även om image blev skapad utan problem så kan det uppstå problem under deployment.
 Om den nya virtuella maskinen har fastnat på `Creating` eller är i `Failed` tillstånd så kan det innebära att image blev korrupt. I så fall får man bygga en ny image.
 
-![6.png](/.attachments/6-d7d2ac7e-d487-476e-a00c-a5a4744906ff.png)
-
-![7.png](/.attachments/7-d1cac037-432b-4cc7-b1a1-ce6aea13750c.png)
+<img src="./img/9.png"/>
+<img src="./img/10.png"/>
 
 # Installera devops agenter 
 ## Windows 
@@ -154,7 +158,12 @@ $Folders | ForEach-Object {
 }
 ```
 Se till att det ligger 10 nya agenter i poolen `vmdevopswin01`. Dem är märkta med datum. De gamla kan disablas.
-![image.png](/.attachments/image-6d1a1a20-5778-4aa1-82f1-8ddf8888a8d9.png)
+
+<img src="./img/11.png"/>
+
+Man måste lägga till NT AUTHORITY\NETWORK SERVICE och NT AUTHORITY\NETWORK som administratör.
+
+<img src="./img/12.png"/>
 
 ## Linux
 Logga in med SSH. Placera dig på `/` - `cd /`
