@@ -103,7 +103,7 @@ Gå till en image och klicka `Clone to a VM image`
 
 Fyll i versionen i formatet `yyyy.MM.dd` t.ex. `2024.04.22`
 Välj befintlig galleri och definition.
-Default storage sku: `Preminum SSD LRS`
+Default storage sku: `Preminum SSD LRS`.
 Det kan ta ~30 minuter.
 
 <img src="./img/14.png"/>
