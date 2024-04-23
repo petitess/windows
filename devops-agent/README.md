@@ -21,7 +21,7 @@ Import-Module .\helpers\GenerateResourcesAndImage.ps1
 -ImageType 'Windows2022' `
 -ManagedImageName ("image-agent-windows-$(Get-Date -Format "yyyy-MM-dd")").ToLower()
 ```
-# Info
+# Info Virtual Machines
 
 XXX använder sig av privata devops agenter. I och med att de behöver ha massa olika verktyg används en fullpackad image som microsoft använder. Tyvär får man inte en färdig image, den måste man bygga själv.
 
