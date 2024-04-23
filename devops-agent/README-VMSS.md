@@ -92,7 +92,6 @@ Här är ett linux-bygge som misslyckades, pga. SSH. I det fallet inget farlig i
 
 <img src="./img/6.png"/>
 
-När images är färdiga kan man skapa virtuella maskiner av dem.
 <img src="./img/7.png"/>
 
 # Skapa en VM version
