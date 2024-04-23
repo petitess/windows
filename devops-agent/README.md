@@ -1,14 +1,25 @@
-#### Download
-```
+```powershell
+# Download
 https://vstsagentpackage.azureedge.net/agent/3.232.3/vsts-agent-win-x64-3.232.3.zip
-```
-#### Install
-```
+# Install
 ./config.cmd --unattended --url "https://dev.azure.com/XXX" --auth "PAT" --token "XXXx75plrkvy52xq" --pool "vmmgmtprod0x" --agent "vmmgmtprod01-1" --work "_work" --runAsService --runAsAutoLogon --noRestart --windowsLogonAccount "NT AUTHORITY\NETWORK SERVICE"
-```
-#### Remove
-```
+# Remove
 ./config.cmd remove --auth "PAT" --token "XXXXsjqaej64k6txaskrxl37zujx75plrkvy52xq"
+```
+# Summery
+PIM: Owner & Application Admin
+```powershell
+cd .\Documents\
+git clone https://github.com/actions/runner-images.git
+cd .\runner-images\
+Import-Module .\helpers\GenerateResourcesAndImage.ps1
+
+.\helpers\GenerateResourcesAndImage.ps1; GenerateResourcesAndImage `
+-SubscriptionId 'd7909d2e-2a55-4c2f-b005-d700d0bc3e66' `
+-ResourceGroupName 'rg-infra-image-prod-01' `
+-AzureLocation 'westeurope' `
+-ImageType 'Windows2022' `
+-ManagedImageName ("image-agent-windows-$(Get-Date -Format "yyyy-MM-dd")").ToLower()
 ```
 # Info
 
