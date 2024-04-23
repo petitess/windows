@@ -106,7 +106,7 @@ Välj befintlig galleri och definition.
 Default storage sku: `Preminum SSD LRS`.
 Det kan ta ~30 minuter.
 
-<img src="./img/14.png"/>
+<img src="./img/14a.png"/>
 
 När image är klar och funkar. Kan man ta bort gamla versioner.
 
